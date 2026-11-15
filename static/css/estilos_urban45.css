@@ -1,0 +1,231 @@
+/* ==========================================================================
+   Archivo: recursos_estaticos/css/estilos_urban45.css
+   Proyecto: Sistema Web Urban 45 - Gimnasio Smart
+   Curso: Lenguajes de Programación - UTP
+   Descripción: Hoja de estilos principal inspirada en los prototipos de la
+                guía de Urban 45 (PDF pp. 67–73).
+   ========================================================================== */
+
+:root {
+    --color-fondo-sidebar: #1B1E23;
+    --color-item-activo: #2D323B;
+    --color-acento-urban: #FF6B00;
+    --color-amarillo-urban: #FFB300;
+    --color-fondo-pagina: #F4F6F9;
+    --color-texto-principal: #212529;
+}
+
+body {
+    background-color: var(--color-fondo-pagina);
+    color: var(--color-texto-principal);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* Contenedor general con barra lateral fija y contenido a la derecha */
+.contenedor-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Barra lateral izquierda (Inspirada en las páginas 68–73 de la Guía) */
+.barra-lateral {
+    width: 265px;
+    background-color: var(--color-fondo-sidebar);
+    color: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 1rem;
+    flex-shrink: 0;
+    box-shadow: 3px 0 12px rgba(0, 0, 0, 0.15);
+}
+
+.perfil-sidebar {
+    text-align: center;
+    padding-bottom: 1.25rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.logo-sidebar {
+    width: 82px;
+    height: 82px;
+    margin-bottom: 0.75rem;
+    transition: transform 0.2s ease;
+}
+
+.logo-sidebar:hover {
+    transform: scale(1.05);
+}
+
+.nombre-usuario-sidebar {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.15rem;
+    color: #FFFFFF;
+}
+
+.rol-usuario-sidebar {
+    font-size: 0.78rem;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--color-amarillo-urban);
+    font-weight: 600;
+}
+
+/* Enlaces del menú de navegación */
+.menu-navegacion {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+}
+
+.menu-navegacion li {
+    margin-bottom: 0.4rem;
+}
+
+.enlace-menu {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: #D0D5DD;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.enlace-menu:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #FFFFFF;
+}
+
+.enlace-menu.activo {
+    background-color: var(--color-item-activo);
+    color: #FFFFFF;
+    border-left: 4px solid var(--color-acento-urban);
+    font-weight: 600;
+}
+
+/* Área principal de contenido */
+.contenido-principal {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+}
+
+/* Barra superior informativa */
+.barra-superior {
+    background-color: #FFFFFF;
+    padding: 0.85rem 2rem;
+    border-bottom: 1px solid #E4E7EC;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cuerpo-pagina {
+    padding: 1.75rem 2rem;
+    flex-grow: 1;
+}
+
+/* Tarjetas de resumen y módulos (Inspiradas en Guía p. 68) */
+.tarjeta-urban {
+    background: #FFFFFF;
+    border: 1px solid #E4E7EC;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(16, 24, 40, 0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 100%;
+}
+
+.tarjeta-urban:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 18px rgba(16, 24, 40, 0.08);
+}
+
+.icono-seccion {
+    width: 54px;
+    height: 54px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Botón naranja característico de Urban 45 */
+.btn-urban {
+    background-color: var(--color-acento-urban);
+    color: #FFFFFF;
+    border: none;
+    font-weight: 600;
+}
+
+.btn-urban:hover {
+    background-color: #E05E00;
+    color: #FFFFFF;
+}
+
+/* Tablas limpias */
+.tabla-urban thead th {
+    background-color: #212529;
+    color: #FFFFFF;
+    font-weight: 600;
+    font-size: 0.88rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border: none;
+    padding: 0.85rem 1rem;
+}
+
+.tabla-urban tbody td {
+    padding: 0.85rem 1rem;
+    vertical-align: middle;
+}
+
+/* Pantalla de Login (Inspirada en Guía p. 67) */
+.fondo-login {
+    background: linear-gradient(135deg, rgba(20, 23, 28, 0.92), rgba(40, 32, 20, 0.88)),
+                radial-gradient(circle at center, #3a2e1d 0%, #121417 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
+
+.caja-login {
+    background-color: rgba(24, 26, 30, 0.95);
+    border: 1px solid rgba(255, 179, 0, 0.28);
+    border-radius: 16px;
+    padding: 2.5rem 2.2rem;
+    width: 100%;
+    max-width: 430px;
+    color: #FFFFFF;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.titulo-login-urban {
+    color: var(--color-acento-urban);
+    font-weight: 900;
+    letter-spacing: 1px;
+    font-size: 2rem;
+}
+
+/* Responsividad para pantallas pequeñas */
+@media (max-width: 991.98px) {
+    .contenedor-layout {
+        flex-direction: column;
+    }
+    .barra-lateral {
+        width: 100%;
+        padding: 1rem;
+    }
+}

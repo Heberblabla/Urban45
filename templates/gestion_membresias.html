@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Gestión de Membresías - Urban 45{% endblock %}
+
+{% block contenido %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+        <h2 class="fw-bold mb-1">Gestión de Planes y Membresías</h2>
+        <p class="text-secondary mb-0">
+            Catálogo de suscripciones de Urban 45, transformación funcional con <code>map()</code> y proyección recursiva por meses.
+        </p>
+    </div>
+    <!-- Selector de Descuento Promocional usando map() -->
+    <div class="d-flex align-items-center gap-2">
+        <span class="small fw-semibold text-secondary">Simular promoción con <code>map()</code>:</span>
+        <a href="?descuento=0&plan_simulado={{ plan_simulado_nombre }}&meses={{ meses_simulados }}"
+           class="btn btn-sm {% if porcentaje_descuento == 0 %}btn-dark{% else %}btn-outline-dark{% endif %}">Normal (0%)</a>
+        <a href="?descuento=10&plan_simulado={{ plan_simulado_nombre }}&meses={{ meses_simulados }}"
+           class="btn btn-sm {% if porcentaje_descuento == 10 %}btn-urban{% else %}btn-outline-secondary{% endif %}">-10%</a>
+        <a href="?descuento=15&plan_simulado={{ plan_simulado_nombre }}&meses={{ meses_simulados }}"
+           class="btn btn-sm {% if porcentaje_descuento == 15 %}btn-urban{% else %}btn-outline-secondary{% endif %}">-15%</a>
+        <a href="?descuento=20&plan_simulado={{ plan_simulado_nombre }}&meses={{ meses_simulados }}"
+           class="btn btn-sm {% if porcentaje_descuento == 20 %}btn-urban{% else %}btn-outline-secondary{% endif %}">-20%</a>
+    </div>
+</div>
+
+<!-- Tarjetas de los Planes de Membresía (Básico, Standard, Premium) -->
+<div class="row g-4 mb-5">
+    {% for plan in planes %}
+    <div class="col-md-4">
+        <div class="tarjeta-urban p-4 d-flex flex-column border-top border-4 border-{{ plan.color_etiqueta }}">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h4 class="fw-bold mb-0">Plan {{ plan.nombre }}</h4>
+                <span class="badge bg-{{ plan.color_etiqueta }} {% if plan.color_etiqueta == 'warning' %}text-dark{% endif %}">
+                    {{ plan.duracion_dias }} días
+                </span>
+            </div>
+
+            <div class="my-3">
+                {% if porcentaje_descuento > 0 %}
+                    <span class="text-decoration-line-through text-muted me-2">S/. {{ plan.precio|floatformat:2 }}</span>
+                    <span class="fs-2 fw-bold text-success">S/. {{ plan.precio_con_descuento|floatformat:2 }}</span>
+                    <span class="badge bg-success-subtle text-success ms-1">Ahorras S/. {{ plan.ahorro|floatformat:2 }}</span>
+                {% else %}
+                    <span class="fs-2 fw-bold text-dark">S/. {{ plan.precio|floatformat:2 }}</span>
+                    <span class="text-muted small">/ mes</span>
+                {% endif %}
+            </div>
+
+            <p class="text-secondary small flex-grow-1">
+                {{ plan.beneficios }}
+            </p>
+
+            <div class="pt-3 border-top d-flex justify-content-between align-items-center">
+                <span class="small text-muted">Código: <code>{{ plan.codigo }}</code></span>
+                <a href="{% url 'lista_clientes' %}?plan={{ plan.nombre }}" class="btn btn-sm btn-outline-dark">
+                    Ver socios inscritos
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Simulador de Fidelidad con Función Recursiva -->
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="tarjeta-urban p-4">
+            <h5 class="fw-bold mb-2">
+                <i class="bi bi-arrow-repeat text-primary me-1"></i>
+                Simulador de Pago Acumulado (Recursividad)
+            </h5>
+            <p class="text-secondary small">
+                Calcula el costo total al contratar varios meses consecutivos usando la función recursiva
+                <code>calcular_pago_acumulado_recursivo(meses, precio_mensual)</code>. A partir del segundo mes, se descuenta S/. 5.00 por cada mes adicional.
+            </p>
+
+            <form method="get" action="{% url 'gestion_membresias' %}" class="row g-3 align-items-end mt-1">
+                <input type="hidden" name="descuento" value="{{ porcentaje_descuento }}">
+
+                <div class="col-sm-5">
+                    <label for="id_plan_sim" class="form-label small fw-semibold">Seleccionar Plan</label>
+                    <select id="id_plan_sim" name="plan_simulado" class="form-select">
+                        <option value="Básico" {% if plan_simulado_nombre == 'Básico' %}selected{% endif %}>Básico (S/. 90.00)</option>
+                        <option value="Standard" {% if plan_simulado_nombre == 'Standard' %}selected{% endif %}>Standard (S/. 140.00)</option>
+                        <option value="Premium" {% if plan_simulado_nombre == 'Premium' %}selected{% endif %}>Premium (S/. 200.00)</option>
+                    </select>
+                </div>
+
+                <div class="col-sm-4">
+                    <label for="id_meses" class="form-label small fw-semibold">Cantidad de Meses</label>
+                    <select id="id_meses" name="meses" class="form-select">
+                        <option value="1" {% if meses_simulados == 1 %}selected{% endif %}>1 mes (Caso Base)</option>
+                        <option value="2" {% if meses_simulados == 2 %}selected{% endif %}>2 meses</option>
+                        <option value="3" {% if meses_simulados == 3 %}selected{% endif %}>3 meses (Trimestral)</option>
+                        <option value="6" {% if meses_simulados == 6 %}selected{% endif %}>6 meses (Semestral)</option>
+                        <option value="12" {% if meses_simulados == 12 %}selected{% endif %}>12 meses (Anual)</option>
+                    </select>
+                </div>
+
+                <div class="col-sm-3">
+                    <button type="submit" class="btn btn-urban w-100">Calcular</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="tarjeta-urban p-4 bg-light">
+            <h5 class="fw-bold mb-3">Resultado del Cálculo Recursivo</h5>
+            <div class="row g-3 text-center">
+                <div class="col-4">
+                    <div class="p-3 bg-white rounded border">
+                        <div class="small text-muted">Precio Normal</div>
+                        <div class="fs-5 fw-semibold text-secondary">S/. {{ costo_sin_beneficio|floatformat:2 }}</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-3 bg-white rounded border border-success">
+                        <div class="small text-muted">Total Recursivo</div>
+                        <div class="fs-5 fw-bold text-success">S/. {{ costo_recursivo_total|floatformat:2 }}</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-3 bg-white rounded border">
+                        <div class="small text-muted">Ahorro Fidelidad</div>
+                        <div class="fs-5 fw-bold text-primary">S/. {{ ahorro_fidelidad|floatformat:2 }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="small text-secondary mt-3">
+                <strong>Explicación para exposición:</strong>
+                Si <code>meses == 1</code>, se activa el <em>caso base</em> devolviendo <code>S/. {{ precio_base_elegido|floatformat:2 }}</code>.
+                Si <code>meses > 1</code>, se activa el <em>caso recursivo</em> sumando <code>(precio - 5) + calcular_pago_acumulado_recursivo(meses - 1, precio)</code>.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

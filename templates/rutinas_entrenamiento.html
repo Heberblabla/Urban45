@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Plan de Entrenamiento - Urban 45{% endblock %}
+
+{% block contenido %}
+<div class="mb-4">
+    <h2 class="fw-bold mb-1">Plan de Entrenamiento Personalizado</h2>
+    <p class="text-secondary mb-0">
+        El sistema evalúa los objetivos y la condición física de cada socio para recomendar una rutina adecuada (Referencia: Guía Urban 45, PDF pp. 71 y 72).
+    </p>
+</div>
+
+<div class="row g-4 mb-5">
+    <!-- Columna Izquierda: Formulario de Evaluación de Reglas de Rutina (Guía p. 71) -->
+    <div class="col-lg-6">
+        <div class="tarjeta-urban p-4">
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-diagram-3-fill text-warning me-1"></i>
+                Evaluador de Rutina por Reglas de Negocio
+            </h5>
+
+            <form method="post" action="{% url 'rutinas_entrenamiento' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="id_cliente" class="form-label fw-semibold small">Seleccionar Cliente:</label>
+                    <select id="id_cliente" name="cliente_nombre" class="form-select">
+                        {% for cliente in lista_clientes %}
+                        {% with nombre_completo=cliente.nombre|add:" "|add:cliente.apellidos %}
+                        <option value="{{ nombre_completo }}" {% if datos_evaluacion.cliente_nombre == nombre_completo %}selected{% endif %}>
+                            {{ nombre_completo }} (Plan {{ cliente.tipo_membresia }})
+                        </option>
+                        {% endwith %}
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_objetivo" class="form-label fw-semibold small">Objetivos del Cliente:</label>
+                    <select id="id_objetivo" name="objetivo" class="form-select">
+                        <option value="masa_muscular" {% if datos_evaluacion.objetivo == 'masa_muscular' %}selected{% endif %}>
+                            Aumentar su masa muscular (Hipertrofia y Fuerza)
+                        </option>
+                        <option value="perdida_peso" {% if datos_evaluacion.objetivo == 'perdida_peso' %}selected{% endif %}>
+                            Pérdida de peso y reducción de porcentaje graso
+                        </option>
+                        <option value="resistencia" {% if datos_evaluacion.objetivo == 'resistencia' %}selected{% endif %}>
+                            Mejorar resistencia cardiovascular y tonificación
+                        </option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_condicion" class="form-label fw-semibold small">Capacidades Físicas Actuales:</label>
+                    <select id="id_condicion" name="condicion_fisica" class="form-select">
+                        <option value="buena" {% if datos_evaluacion.condicion_fisica == 'buena' %}selected{% endif %}>
+                            Buena (Con experiencia previa en entrenamiento)
+                        </option>
+                        <option value="intermedia" {% if datos_evaluacion.condicion_fisica == 'intermedia' %}selected{% endif %}>
+                            Intermedia (Actividad física moderada)
+                        </option>
+                        <option value="inicial" {% if datos_evaluacion.condicion_fisica == 'inicial' %}selected{% endif %}>
+                            Inicial / Condiciones bajas (Principiante)
+                        </option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label for="id_lesion" class="form-label fw-semibold small">¿Reporta molestia o lesión articular?</label>
+                    <select id="id_lesion" name="tiene_lesion" class="form-select">
+                        <option value="no" {% if datos_evaluacion.tiene_lesion == 'no' %}selected{% endif %}>
+                            No, sin restricciones articulares
+                        </option>
+                        <option value="si" {% if datos_evaluacion.tiene_lesion == 'si' %}selected{% endif %}>
+                            Sí, requiere ejercicios de bajo impacto
+                        </option>
+                    </select>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-dark btn-lg">
+                        <i class="bi bi-check2-circle me-1"></i> Evaluar Reglas y Recomendar Plan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Columna Derecha: Resultado de la Recomendación o Catálogo de Rutinas -->
+    <div class="col-lg-6">
+        {% if resultado_recomendacion %}
+        <div class="tarjeta-urban p-4 border-top border-4 border-warning">
+            <span class="badge bg-warning text-dark mb-2 px-3 py-2">
+                <i class="bi bi-lightbulb-fill me-1"></i> Recomendación Generada por Reglas
+            </span>
+            <h4 class="fw-bold mb-1">{{ resultado_recomendacion.rutina }}</h4>
+            <p class="text-muted small mb-3">
+                Socio evaluado: <strong>{{ datos_evaluacion.cliente_nombre }}</strong>
+            </p>
+
+            <div class="p-3 bg-light rounded border mb-3">
+                <div class="mb-2">
+                    <span class="text-secondary small d-block">Frecuencia sugerida:</span>
+                    <span class="fw-bold">{{ resultado_recomendacion.frecuencia }}</span>
+                </div>
+                <div class="mb-2">
+                    <span class="text-secondary small d-block">Entrenador responsable:</span>
+                    <span class="fw-bold">{{ resultado_recomendacion.entrenador }}</span>
+                </div>
+                <div>
+                    <span class="text-secondary small d-block">Justificación de la regla aplicada:</span>
+                    <span class="small">{{ resultado_recomendacion.explicacion }}</span>
+                </div>
+            </div>
+
+            <div class="alert alert-secondary small mb-0">
+                <i class="bi bi-info-circle me-1"></i>
+                Esta decisión fue tomada por la función <code>evaluar_rutina_recomendada()</code> en <code>reglas_negocio.py</code>. El guardado de la asignación en PostgreSQL se habilitará en la fase de base de datos.
+            </div>
+        </div>
+        {% else %}
+        <div class="tarjeta-urban p-4">
+            <h5 class="fw-bold mb-3">Catálogo de Programas de Urban 45</h5>
+            <p class="text-secondary small">
+                Selecciona las condiciones del cliente a la izquierda y presiona el botón para evaluar qué programa le corresponde según las reglas del sistema:
+            </p>
+            <div class="list-group list-group-flush small">
+                {% for rutina in catalogo_rutinas %}
+                <div class="list-group-item px-0 py-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold text-dark">{{ rutina.nombre }}</span>
+                        <span class="badge bg-light text-dark border">{{ rutina.frecuencia }}</span>
+                    </div>
+                    <p class="text-secondary mb-1">{{ rutina.enfoque }}</p>
+                    <small class="text-muted">Entrenador: {{ rutina.entrenador }}</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Tabla de Progreso de los Clientes (Inspirada en la Guía, PDF p. 72) -->
+<div class="tarjeta-urban p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h4 class="fw-bold mb-1">Progreso de los Clientes</h4>
+            <p class="text-secondary small mb-0">
+                Seguimiento de indicadores clave como peso levantado y repeticiones (Guía, PDF p. 72).
+            </p>
+        </div>
+        <span class="badge bg-info-subtle text-dark border px-3 py-2">
+            Promedio de peso levantado (<code>reduce</code>): <strong>{{ promedio_peso }} kg</strong>
+        </span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover tabla-urban mb-0">
+            <thead>
+                <tr>
+                    <th>Nombre del Cliente</th>
+                    <th>Fecha</th>
+                    <th>Peso Levantado (kg)</th>
+                    <th>Repeticiones</th>
+                    <th>Comentario del Entrenador</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reg in progresos %}
+                <tr>
+                    <td class="fw-bold">{{ reg.cliente }}</td>
+                    <td>{{ reg.fecha }}</td>
+                    <td class="fw-semibold">{{ reg.peso_levantado_kg }} kg</td>
+                    <td>{{ reg.repeticiones }}</td>
+                    <td class="text-secondary">{{ reg.comentario }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

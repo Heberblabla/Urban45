@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Gestión de Pagos - Urban 45{% endblock %}
+
+{% block contenido %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+        <h2 class="fw-bold mb-1">Gestión de Pagos y Facturación</h2>
+        <p class="text-secondary mb-0">
+            Registro de cobros, emisión de resumen de facturación y control de comprobantes (Guía, PDF p. 73).
+        </p>
+    </div>
+    <!-- Filtros funcionales de comprobantes -->
+    <div class="d-flex align-items-center gap-2">
+        <span class="small fw-semibold text-secondary">Filtrar estado:</span>
+        <a href="{% url 'gestion_pagos' %}?estado=Todos"
+           class="btn btn-sm {% if estado_filtro == 'Todos' %}btn-dark{% else %}btn-outline-dark{% endif %}">Todos</a>
+        <a href="{% url 'gestion_pagos' %}?estado=Pagado"
+           class="btn btn-sm {% if estado_filtro == 'Pagado' %}btn-success{% else %}btn-outline-success{% endif %}">Pagado</a>
+        <a href="{% url 'gestion_pagos' %}?estado=Pendiente"
+           class="btn btn-sm {% if estado_filtro == 'Pendiente' %}btn-warning{% else %}btn-outline-warning text-dark{% endif %}">Pendiente</a>
+    </div>
+</div>
+
+<!-- Indicadores de Pagos calculados con reduce() -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="tarjeta-urban p-3 border-start border-4 border-success">
+            <div class="text-muted small fw-semibold">TOTAL RECAUDADO (PAGADO)</div>
+            <div class="fs-2 fw-bold text-success">S/. {{ total_recaudado|floatformat:2 }}</div>
+            <div class="small text-muted">Sumado con <code>map()</code> y <code>reduce()</code></div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="tarjeta-urban p-3 border-start border-4 border-warning">
+            <div class="text-muted small fw-semibold">MONTO PENDIENTE DE COBRO</div>
+            <div class="fs-2 fw-bold text-dark">S/. {{ total_pendiente|floatformat:2 }}</div>
+            <div class="small text-muted">Comprobantes por regularizar</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="tarjeta-urban p-3 border-start border-4 border-primary">
+            <div class="text-muted small fw-semibold">FACTURACIÓN TOTAL DEL MES</div>
+            <div class="fs-2 fw-bold text-primary">S/. {{ total_general|floatformat:2 }}</div>
+            <div class="small text-muted">{{ pagos_filtrados|length }} comprobantes mostrados</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Formulario Registrar Pago (Guía p. 73) -->
+    <div class="col-lg-6">
+        <div class="tarjeta-urban p-4 h-100">
+            <h5 class="fw-bold mb-2">
+                <i class="bi bi-wallet2 text-primary me-1"></i>
+                Registrar Pago
+            </h5>
+            <p class="text-secondary small mb-3">
+                Valida un nuevo cobro de membresía. <em>(Modo demostración: muestra vista previa del comprobante antes de conectar persistencia en PostgreSQL).</em>
+            </p>
+
+            {% if errores_pago %}
+            <div class="alert alert-danger py-2 small">
+                <ul class="mb-0 ps-3">
+                    {% for error in errores_pago %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if pago_demo_validado %}
+            <div class="alert alert-success border-success">
+                <div class="fw-bold mb-1">
+                    <i class="bi bi-check-circle-fill me-1"></i>
+                    Comprobante #{{ pago_demo_validado.id_factura_vista }} validado (Vista previa demo)
+                </div>
+                <div class="small">
+                    <strong>Cliente:</strong> {{ pago_demo_validado.cliente }} |
+                    <strong>Plan:</strong> {{ pago_demo_validado.plan }} |
+                    <strong>Monto:</strong> S/. {{ pago_demo_validado.monto|floatformat:2 }} |
+                    <strong>Fecha:</strong> {{ pago_demo_validado.fecha }}
+                </div>
+            </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'gestion_pagos' %}?estado={{ estado_filtro }}" class="row g-3">
+                {% csrf_token %}
+                <input type="hidden" name="accion" value="registrar_pago">
+
+                <div class="col-md-6">
+                    <label for="id_cliente_pago" class="form-label small fw-semibold">Cliente</label>
+                    <select id="id_cliente_pago" name="cliente_nombre" class="form-select">
+                        {% for c in lista_clientes %}
+                        {% with nombre_completo=c.nombre|add:" "|add:c.apellidos %}
+                        <option value="{{ nombre_completo }}" {% if datos_pago.cliente_nombre == nombre_completo %}selected{% endif %}>
+                            {{ nombre_completo }}
+                        </option>
+                        {% endwith %}
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="id_plan_pago" class="form-label small fw-semibold">Concepto / Plan</label>
+                    <select id="id_plan_pago" name="plan" class="form-select">
+                        <option value="Básico" {% if datos_pago.plan == 'Básico' %}selected{% endif %}>Membresía Básico (S/. 90.00)</option>
+                        <option value="Standard" {% if datos_pago.plan == 'Standard' %}selected{% endif %}>Membresía Standard (S/. 140.00)</option>
+                        <option value="Premium" {% if datos_pago.plan == 'Premium' %}selected{% endif %}>Membresía Premium (S/. 200.00)</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="id_monto_pago" class="form-label small fw-semibold">Monto (S/.)</label>
+                    <input type="number" step="0.01" min="1" id="id_monto_pago" name="monto"
+                           value="{{ datos_pago.monto }}" class="form-control" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="id_fecha_pago" class="form-label small fw-semibold">Fecha</label>
+                    <input type="date" id="id_fecha_pago" name="fecha"
+                           value="{{ datos_pago.fecha }}" class="form-control" required>
+                </div>
+
+                <div class="col-12 mt-3">
+                    <button type="submit" class="btn btn-urban px-4">
+                        <i class="bi bi-check2-circle me-1"></i> Registrar Pago
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sección Generar Reporte de Facturación (Guía p. 73) -->
+    <div class="col-lg-6">
+        <div class="tarjeta-urban p-4 h-100 d-flex flex-column">
+            <h5 class="fw-bold mb-2">
+                <i class="bi bi-file-earmark-bar-graph text-warning me-1"></i>
+                Generar Reporte de Facturación
+            </h5>
+            <p class="text-secondary small">
+                Consolida los comprobantes filtrados actualmente para verificar los ingresos recaudados y saldos pendientes del gimnasio Urban 45.
+            </p>
+
+            <form method="post" action="{% url 'gestion_pagos' %}?estado={{ estado_filtro }}" class="mb-3">
+                {% csrf_token %}
+                <input type="hidden" name="accion" value="generar_reporte">
+                <button type="submit" class="btn btn-dark px-4">
+                    <i class="bi bi-printer me-1"></i> Generar Reporte
+                </button>
+            </form>
+
+            {% if reporte_demo %}
+            <div class="alert alert-info border-info mt-auto mb-0">
+                <div class="fw-bold mb-1">
+                    <i class="bi bi-clipboard-data me-1"></i>
+                    Resumen de Facturación (Vista Previa — Filtro: {{ reporte_demo.filtro_aplicado }})
+                </div>
+                <ul class="mb-0 small ps-3">
+                    <li>Comprobantes incluidos: <strong>{{ reporte_demo.cantidad_facturas }}</strong></li>
+                    <li>Subtotal de la vista actual: <strong>S/. {{ reporte_demo.total_acumulado|floatformat:2 }}</strong></li>
+                    <li>Total pagado del periodo: <strong>S/. {{ reporte_demo.total_recaudado|floatformat:2 }}</strong></li>
+                    <li>Total pendiente del periodo: <strong>S/. {{ reporte_demo.total_pendiente|floatformat:2 }}</strong></li>
+                </ul>
+            </div>
+            {% else %}
+            <div class="p-3 bg-light rounded border mt-auto">
+                <div class="small text-secondary">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Haz clic en <strong>Generar Reporte</strong> para obtener el consolidado rápido del filtro seleccionado (<code>{{ estado_filtro }}</code>).
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Tabla Facturas Generadas (Guía p. 73) -->
+<div class="tarjeta-urban p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h5 class="fw-bold mb-0">
+            <i class="bi bi-receipt-cutoff me-1 text-secondary"></i>
+            Facturas Generadas
+        </h5>
+        <span class="badge bg-secondary-subtle text-dark border px-3 py-2">
+            Mostrando {{ pagos_filtrados|length }} registros ({{ estado_filtro }})
+        </span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover tabla-urban mb-0">
+            <thead>
+                <tr>
+                    <th>ID Factura</th>
+                    <th>Cliente</th>
+                    <th>Plan</th>
+                    <th>Monto</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pago in pagos_filtrados %}
+                <tr>
+                    <td class="fw-bold">#{{ pago.id_factura }}</td>
+                    <td>{{ pago.cliente }}</td>
+                    <td>{{ pago.plan }}</td>
+                    <td class="fw-semibold">S/. {{ pago.monto|floatformat:2 }}</td>
+                    <td>{{ pago.fecha }}</td>
+                    <td>
+                        {% if pago.estado == 'Pagado' %}
+                            <span class="badge bg-success">Pagado</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Pendiente</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                        No hay facturas registradas para el estado seleccionado.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
